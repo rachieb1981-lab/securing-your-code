@@ -143,8 +143,7 @@ describe('/profile/image/url', () => {
     form.append('imageUrl', 'https://placekitten.com/g/100/100')
 
     return frisby.post(`${URL}/profile/image/url`, {
-      // @ts-expect-error FIXME form.getHeaders() is not found
-      headers: { 'Content-Type': form.getHeaders()['content-type'] },
+      headers: { 'Content-Type': (form as any).getHeaders()['content-type'] },
       body: form
     })
       .expect('status', 500)
