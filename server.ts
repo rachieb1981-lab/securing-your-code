@@ -551,8 +551,8 @@ restoreOverwrittenFilesWithOriginals().then(() => {
       })
     }
 
-    // fix the api difference between finale (fka epilogue) and previously used sequlize-restful
-    resource.all.send.before((req: Request, res: Response, context: { instance: { status: string, data: any }, continue: any }) => {
+    // fix the api difference between finale (fka epilogue) and previously used sequelize-restful
+    resource.all.send.before((req: Request, res: Response, context: { instance: any, continue: any }) => {
       context.instance = {
         status: 'success',
         data: context.instance
