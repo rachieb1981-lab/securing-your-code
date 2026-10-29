@@ -65,17 +65,24 @@ module.exports = function placeOrder () {
           let totalPrice = 0
           const basketProducts: Product[] = []
           let totalPoints = 0
+
+          const productIds = basket.Products?.map(p => p.BasketItem?.ProductId).filter((id): id is number => id !== undefined) ?? []
+          const quantities = await QuantityModel.findAll({ where: { ProductId: productIds } })
+          const quantityMap = new Map<number, number>()
+          quantities.forEach((q: any) => {
+            quantityMap.set(q.ProductId, q.quantity)
+          })
+
           basket.Products?.forEach(({ BasketItem, price, deluxePrice, name, id }) => {
             if (BasketItem != null) {
               challengeUtils.solveIf(challenges.christmasSpecialChallenge, () => { return BasketItem.ProductId === products.christmasSpecial.id })
-              QuantityModel.findOne({ where: { ProductId: BasketItem.ProductId } }).then((product: any) => {
-                const newQuantity = product.quantity - BasketItem.quantity
-                QuantityModel.update({ quantity: newQuantity }, { where: { ProductId: BasketItem?.ProductId } }).catch((error: unknown) => {
+              if (quantityMap.has(BasketItem.ProductId)) {
+                const currentQuantity = quantityMap.get(BasketItem.ProductId) ?? 0
+                const newQuantity = currentQuantity - BasketItem.quantity
+                QuantityModel.update({ quantity: newQuantity }, { where: { ProductId: BasketItem.ProductId } }).catch((error: unknown) => {
                   next(error)
                 })
-              }).catch((error: unknown) => {
-                next(error)
-              })
+              }
               let itemPrice: number
               if (security.isDeluxe(req)) {
                 itemPrice = deluxePrice
