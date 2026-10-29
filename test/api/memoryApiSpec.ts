@@ -96,8 +96,7 @@ describe('/rest/memories', () => {
         return frisby.post(REST_URL + '/memories', {
           headers: {
             Authorization: 'Bearer ' + jsonLogin.authentication.token,
-            // @ts-expect-error FIXME form.getHeaders() is not found
-            'Content-Type': form.getHeaders()['content-type']
+            'Content-Type': (form as any).getHeaders()['content-type']
           },
           body: form
         })
