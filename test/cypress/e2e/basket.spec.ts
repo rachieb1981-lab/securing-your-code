@@ -48,7 +48,8 @@ describe('/#/basket', () => {
 
         cy.visit('/#/basket')
 
-        // TODO Verify functionally that it's not the basket of the admin
+        cy.get('mat-table').should('contain', 'Fruit Press')
+        cy.get('mat-table').should('not.contain', 'Apple Juice')
         cy.expectChallengeSolved({ challenge: 'View Basket' })
       })
     })
