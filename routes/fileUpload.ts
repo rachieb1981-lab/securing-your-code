@@ -82,8 +82,8 @@ function handleXmlUpload ({ file }: Request, res: Response, next: NextFunction) 
         challengeUtils.solveIf(challenges.xxeFileDisclosureChallenge, () => { return (utils.matchesEtcPasswdFile(xmlString) || utils.matchesSystemIniFile(xmlString)) })
         res.status(410)
         next(new Error('B2B customer complaints via file upload have been deprecated for security reasons: ' + utils.trunc(xmlString, 400) + ' (' + file.originalname + ')'))
-      } catch (err: any) { // TODO: Remove any
-        if (utils.contains(err.message, 'Script execution timed out')) {
+      } catch (err: unknown) {
+        if (utils.contains(utils.getErrorMessage(err), 'Script execution timed out')) {
           if (challengeUtils.notSolved(challenges.xxeDosChallenge)) {
             challengeUtils.solve(challenges.xxeDosChallenge)
           }
@@ -91,7 +91,7 @@ function handleXmlUpload ({ file }: Request, res: Response, next: NextFunction) 
           next(new Error('Sorry, we are temporarily not available! Please try again later.'))
         } else {
           res.status(410)
-          next(new Error('B2B customer complaints via file upload have been deprecated for security reasons: ' + err.message + ' (' + file.originalname + ')'))
+          next(new Error('B2B customer complaints via file upload have been deprecated for security reasons: ' + utils.getErrorMessage(err) + ' (' + file.originalname + ')'))
         }
       }
     } else {
