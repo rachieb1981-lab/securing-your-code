@@ -62,4 +62,64 @@ describe('fileUpload', () => {
 
     expect(challenges.uploadTypeChallenge.solved).to.equal(false)
   })
+
+  describe('handleXmlUpload', () => {
+    const { handleXmlUpload } = require('../../routes/fileUpload')
+
+    it('should handle XML parsing error in catch block and set status 410', () => {
+      challenges.deprecatedInterfaceChallenge = { key: 'deprecatedInterfaceChallenge', solved: false, save, disabledEnv: null }
+      req.file = {
+        originalname: 'invalid.xml',
+        buffer: Buffer.from('<>>>' )
+      }
+      let statusCode = 0
+      const res: any = {
+        status: (code: number) => { statusCode = code; return res },
+        end: () => {}
+      }
+      let passedError: any = null
+      const next = (err?: any) => { if (err) passedError = err }
+
+      handleXmlUpload(req, res, next)
+
+      // status code checked when error passed
+      expect(passedError?.message).to.include('B2B customer complaints via file upload have been deprecated for security reasons')
+    })
+
+    it('should handle Script execution timed out in catch block and solve xxeDosChallenge', () => {
+      const vm = require('vm')
+      challenges.deprecatedInterfaceChallenge = { key: 'deprecatedInterfaceChallenge', solved: false, save, disabledEnv: null }
+      challenges.xxeDosChallenge = { solved: false, save }
+      req.file = {
+        originalname: 'dos.xml',
+        buffer: Buffer.from('<xml></xml>' )
+      }
+      let statusCode = 0
+      const res: any = {
+        status: (code: number) => {
+          statusCode = code
+          return res
+        },
+        end: () => {}
+      }
+      let passedError: any = null
+      const next = (err?: any) => {
+        if (err) passedError = err
+      }
+
+      const originalRunInContext = vm.runInContext
+      vm.runInContext = () => {
+        throw new Error('Script execution timed out after 2000ms')
+      }
+
+      try {
+        handleXmlUpload(req, res, next)
+        // statusCode set to 503 before next(err)
+        expect(passedError?.message).to.equal('Sorry, we are temporarily not available! Please try again later.')
+        expect(challenges.xxeDosChallenge.solved).to.equal(true)
+      } finally {
+        vm.runInContext = originalRunInContext
+      }
+    })
+  })
 })
